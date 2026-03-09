@@ -105,9 +105,17 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public List<Student> findByName(String firstName) {
+    public List<ResponseStudentDTO> findByName(String firstName) {
         log.info("Finding students with first name: {}", firstName);
-        return studentRepository.findByFirstName(firstName);
+        List<Student> student = studentRepository.findByFirstName(firstName);
+        return student.stream()
+                .map(std -> new ResponseStudentDTO(
+                        std.getId(),
+                        std.getFirstName(),
+                        std.getLastName(),
+                        std.getEmail(),
+                        std.getMobileNo()))
+                .toList();
     }
 
     @Override

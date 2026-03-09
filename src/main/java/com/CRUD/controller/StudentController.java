@@ -120,7 +120,7 @@ public class StudentController {
     @GetMapping("/findByName/{firstName}")
     public ResponseEntity<List<ResponseStudentDTO>> findByName(@PathVariable String firstName) {
         log.info("Searching student with name: {}", firstName);
-        List<Student> students = service.findByName(firstName);
+        List<ResponseStudentDTO> students = service.findByName(firstName);
         if (students.isEmpty()) {
             log.warn("Student not found with name {}", firstName);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
