@@ -5,6 +5,7 @@ import com.CRUD.dto.LoginStudentDTO;
 import com.CRUD.dto.RegisterStudentDTO;
 import com.CRUD.dto.ResponseStudentDTO;
 import com.CRUD.model.Student;
+import com.CRUD.service.EmilService;
 import com.CRUD.service.StudentService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -23,6 +24,9 @@ public class StudentController {
     @Autowired
     private StudentService service;
 
+    @Autowired
+    private EmilService emailService;
+
     public static final Logger log = LoggerFactory.getLogger(StudentController.class);
 
     @PostMapping("/register")
@@ -39,12 +43,16 @@ public class StudentController {
         return ResponseEntity.ok(response);
     }
 
-    // used to add the new student in db
     @PostMapping("/students")
     public ResponseEntity<?> addStudent(@Valid @RequestBody Student std) {
         log.info("Creating new student");
         log.debug("Saving student into database");
-        Student student = this.service.saveStudent(std);
+        Student student = service.saveStudent(std);
+        //sending Email
+        emailService.sendEmployeeWelcomeEmail(
+                std.getEmail(),
+                std.getFirstName()
+        );
         log.info("Student saved successfully with id: {}", student.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body("student saved successfully with id: " + student.getId());
     }
@@ -65,9 +73,19 @@ public class StudentController {
         std.setId(id);
         log.info("updateStudent Api Call");
         log.debug("Update Student Data into Database");
-        this.service.updateStudent(id, std);
+        service.updateStudent(id, std);
         log.info("Student Successfully Update");
         return ResponseEntity.status(HttpStatus.OK).body("Student data Updated Successfully");
+    }
+
+    @PatchMapping("/students/{id}")
+    public ResponseEntity<?> updateSpecificField(@PathVariable Long id,
+                                                 @Valid @RequestBody Student std) {
+        std.setId(id);
+        log.info("Update Specific filed");
+        service.updateStudent(id, std);
+        log.info("Student Specific Update Successfully..!");
+        return ResponseEntity.status(HttpStatus.OK).body("Student Specific Filed Updated");
     }
 
     @DeleteMapping("/students/{id}")
@@ -77,7 +95,7 @@ public class StudentController {
             return ResponseEntity.badRequest().body("Invalid student id");
         }
         log.debug("Student Delete From Database");
-        this.service.deleteById(id);
+        service.deleteById(id);
         log.info("Student Delete Successfully by id: {}", id);
         return ResponseEntity.status(HttpStatus.OK).body("Student Data Delete Successfully");
     }
