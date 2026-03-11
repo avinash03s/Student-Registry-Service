@@ -4,6 +4,7 @@ import com.CRUD.dto.LoginResponseDTO;
 import com.CRUD.dto.RegisterStudentDTO;
 import com.CRUD.dto.ResponseStudentDTO;
 import com.CRUD.model.Student;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -25,4 +26,8 @@ public interface StudentService {
     ResponseStudentDTO registerStudent(RegisterStudentDTO registerStudentDTO);
 
     LoginResponseDTO validateStudent(String email, String password);
+
+    boolean emailExists(String email);
+
+    Page<ResponseStudentDTO> getAllStudents(int page, int size, String sortByName);
 }
