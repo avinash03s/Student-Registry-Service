@@ -15,6 +15,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,5 +164,26 @@ public class StudentServiceImpl implements StudentService {
         response.setFirstName(student.getFirstName());
         response.setEmail(student.getEmail());
         return response;
+    }
+
+    @Override
+    public boolean emailExists(String email) {
+        return studentRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Page<ResponseStudentDTO> getAllStudents(int page, int size, String sortByName) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortByName).ascending());
+        Page<Student> studentPage = studentRepository.findAll(pageable);
+        return studentPage.map(this::convertToDTO);
+    }
+    private ResponseStudentDTO convertToDTO(Student student) {
+        ResponseStudentDTO dto = new ResponseStudentDTO();
+        dto.setId(student.getId());
+        dto.setFirstName(student.getFirstName());
+        dto.setLastName(student.getLastName());
+        dto.setEmail(student.getEmail());
+        dto.setMobileNo(student.getMobileNo());
+        return dto;
     }
 }
