@@ -5,11 +5,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Table(name = "student_data")
+@Table(name = "student_data",indexes = {
+        @Index(name = "idx_email", columnList = "Email"),
+        @Index(name = "idx_rollno", columnList = "Roll_No")
+})
 public class Student {
 
     @Id
@@ -56,7 +61,7 @@ public class Student {
     private String collegeName;
 
     @Column(name = "Date_Of_Birth")
-    private String dob;
+    private LocalDate dob;
 
     @Min(18)
     @Max(60)
