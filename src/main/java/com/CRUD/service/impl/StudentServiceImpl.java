@@ -35,6 +35,9 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Student saveStudent(Student saveStudent) {
         log.info("Save Student with name : {}", saveStudent.getFirstName());
+        if (saveStudent.getCourses() != null){
+            saveStudent.getCourses().forEach(course -> course.setStudent(saveStudent));
+        }
         Student student = studentRepository.save(saveStudent);
         log.info("Student Save Successfully with id : {}", student.getId());
         return student;
@@ -43,6 +46,11 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public List<Student> saveAll(List<Student> students) {
         log.info("Saving {} students", students.size());
+        students.forEach(student->{
+            if (student.getCourses() != null){
+                student.getCourses().forEach(std-> std.setStudent(student));
+            }
+        });
         return studentRepository.saveAll(students);
     }
 
@@ -65,6 +73,12 @@ public class StudentServiceImpl implements StudentService {
         student.setCollegeName(update.getCollegeName());
         student.setDob(update.getDob());
         student.setAge(update.getAge());
+
+        if (update.getCourses() != null){
+            update.getCourses().forEach(course->course.setStudent(student));
+            student.setCourses(update.getCourses());
+        }
+
         Student studentUpdate = studentRepository.save(student);
         log.info("Student Update successfully with id : {}", id);
         return studentUpdate;

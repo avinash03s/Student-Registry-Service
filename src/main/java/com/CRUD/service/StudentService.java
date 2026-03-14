@@ -5,6 +5,7 @@ import com.CRUD.dto.RegisterStudentDTO;
 import com.CRUD.dto.ResponseStudentDTO;
 import com.CRUD.model.Student;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ public interface StudentService {
 
     void deleteById(Long id);
 
+    @EntityGraph(attributePaths = "")
     List<ResponseStudentDTO> findAll();
 
     Student findById(Long id);
