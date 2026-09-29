@@ -17,7 +17,7 @@ public class StudentCourses {
     private String courseDuration;
     private String universityName;
 
-    @ManyToMany()
+    @ManyToOne
     @JoinColumn(name = "student_id")
     private Student student;
 }
