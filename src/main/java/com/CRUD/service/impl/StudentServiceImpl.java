@@ -7,7 +7,9 @@ import com.CRUD.exception.DuplicateStudentException;
 import com.CRUD.exception.StudentNotFoundException;
 import com.CRUD.model.Student;
 import com.CRUD.repository.StudentRepository;
+import com.CRUD.repository.StudentSecondaryRepository;
 import com.CRUD.service.StudentService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
 
-    @Autowired
-    private StudentRepository studentRepository;
+
+    private final StudentRepository studentRepository;
+
+    private final StudentSecondaryRepository studentSecondaryRepository;
 
     public static final Logger log = LoggerFactory.getLogger(StudentServiceImpl.class);
 
@@ -39,10 +44,17 @@ public class StudentServiceImpl implements StudentService {
             saveStudent.getCourses().forEach(course -> course.setStudent(saveStudent));
         }
         Student student = studentRepository.save(saveStudent);
-        log.info("Student Save Successfully with id : {}", student.getId());
+        log.info("Student Save Successfully in primary db with id : {}", student.getId());
+
+        Student copyForSecondary = getStudent(student);
+
+        studentSecondaryRepository.save(copyForSecondary);
+        log.info("Student saved in second DBs with id: {}", copyForSecondary.getId());
         return student;
     }
 
+
+    @Transactional
     @Override
     public List<Student> saveAll(List<Student> students) {
         log.info("Saving {} students", students.size());
@@ -80,9 +92,15 @@ public class StudentServiceImpl implements StudentService {
         }
 
         Student studentUpdate = studentRepository.save(student);
-        log.info("Student Update successfully with id : {}", id);
+        log.info("Student Update successfully in primary db with id : {}", studentUpdate.getId());
+
+        Student copyForSecondary = getStudent(student);
+        studentSecondaryRepository.save(copyForSecondary);
+        log.info("Student Update successfully in second db with id : {}",copyForSecondary.getId());
+
         return studentUpdate;
     }
+
 
     @Override
     public void deleteById(Long id) {
@@ -96,11 +114,11 @@ public class StudentServiceImpl implements StudentService {
         log.info("Student Delete Successfully By id : {}", id);
     }
 
-    @Transactional(readOnly = true)
+    /// second db
     @Override
     public List<ResponseStudentDTO> findAll() {
-        log.info("Fetching all students from database");
-        List<Student> students = studentRepository.findAll();
+        log.info("Fetching all students from SECONDARY database");
+        List<Student> students = studentSecondaryRepository.findAll();
         return students.stream()
                 .map(student -> new ResponseStudentDTO(
                         student.getId(),
@@ -112,20 +130,22 @@ public class StudentServiceImpl implements StudentService {
                 .toList();
     }
 
+    /// second db
     @Override
     public Student findById(Long id) {
-        log.info("Get Student By id:{}", id);
-        return studentRepository.findById(id)
+        log.info("Get Student By id from SECONDARY: {}", id);
+        return studentSecondaryRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Student Not Found By Id : {}", id);
                     return new StudentNotFoundException("Student not found" + id);
                 });
     }
 
+    /// second db
     @Override
     public List<ResponseStudentDTO> findByName(String firstName) {
         log.info("Finding students with first name: {}", firstName);
-        List<Student> student = studentRepository.findByFirstName(firstName);
+        List<Student> student = studentSecondaryRepository.findByFirstName(firstName);
         return student.stream()
                 .map(std -> new ResponseStudentDTO(
                         std.getId(),
@@ -135,6 +155,7 @@ public class StudentServiceImpl implements StudentService {
                         std.getMobileNo()))
                 .toList();
     }
+
 
     @Override
     public ResponseStudentDTO registerStudent(RegisterStudentDTO dto) {
@@ -185,10 +206,11 @@ public class StudentServiceImpl implements StudentService {
         return studentRepository.existsByEmail(email);
     }
 
+    /// second db
     @Override
     public Page<ResponseStudentDTO> getAllStudents(int page, int size, String sortByName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortByName).ascending());
-        Page<Student> studentPage = studentRepository.findAll(pageable);
+        Page<Student> studentPage = studentSecondaryRepository.findAll(pageable);
         return studentPage.map(this::convertToDTO);
     }
     private ResponseStudentDTO convertToDTO(Student student) {
@@ -199,5 +221,21 @@ public class StudentServiceImpl implements StudentService {
         dto.setEmail(student.getEmail());
         dto.setMobileNo(student.getMobileNo());
         return dto;
+    }
+
+    private static Student getStudent(Student student) {
+        Student copyForSecondary = new Student();
+        copyForSecondary.setId(student.getId());
+        copyForSecondary.setFirstName(student.getFirstName());
+        copyForSecondary.setLastName(student.getLastName());
+        copyForSecondary.setAddress(student.getAddress());
+        copyForSecondary.setEmail(student.getEmail());
+        copyForSecondary.setMobileNo(student.getMobileNo());
+        copyForSecondary.setPassword(student.getPassword());
+        copyForSecondary.setRollNo(student.getRollNo());
+        copyForSecondary.setCollegeName(student.getCollegeName());
+        copyForSecondary.setDob(student.getDob());
+        copyForSecondary.setAge(student.getAge());
+        return copyForSecondary;
     }
 }
